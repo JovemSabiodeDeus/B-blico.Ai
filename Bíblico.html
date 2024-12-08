@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BÍBLICO.AI</title>
+
+    <!-- Link para o Manifesto -->
+    <link rel="manifest" href="data:application/json,{
+        &quot;name&quot;:&quot;BÍBLICO.AI&quot;,
+        &quot;short_name&quot;:&quot;BÍBLICO.AI&quot;,
+        &quot;description&quot;:&quot;Seu assistente bíblico em forma de aplicativo&quot;,
+        &quot;start_url&quot;:&quot;index.html&quot;,
+        &quot;display&quot;:&quot;standalone&quot;,
+        &quot;background_color&quot;:&quot;#ffffff&quot;,
+        &quot;theme_color&quot;:&quot;#121212&quot;,
+        &quot;icons&quot;:[{
+            &quot;src&quot;:&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA...
+            &quot;sizes&quot;:&quot;192x192&quot;,
+            &quot;type&quot;:&quot;image/png&quot;
+        }]
+    }">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* Fundo com degradê */
+        body.light-mode::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #ffffff, #e0e0e0);
+            z-index: -1;
+            animation: gradientMove 4s infinite alternate;
+        }
+
+        body.dark-mode::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #121212, #1c1c1c);
+            z-index: -1;
+            animation: gradientMove 4s infinite alternate;
+        }
+
+        @keyframes gradientMove {
+            0% {
+                background-position: 0% 50%;
+            }
+            100% {
+                background-position: 100% 50%;
+            }
+        }
+
+        /* Interface principal */
+        .main-interface {
+            height: 100vh;
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* Aba de histórico translúcida com 40% mais transparência */
+        .sidebar {
+            width: 250px;
+            background: rgba(255, 255, 255, 0.018); /* Transparência aumentada */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 10px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 0 20px 20px 0;
+            position: absolute;
+            left: -250px;
+            top: 0;
+            bottom: 0;
+            transition: transform 0.4s ease, background 0.4s ease;
+            backdrop-filter: blur(3px); /* Desfoque mantido */
+        }
+
+        body.dark-mode .sidebar {
+            background: rgba(18, 18, 18, 0.018); /* Transparência aumentada */
+        }
+
+        .sidebar.open {
+            transform: translateX(250px);
+        }
+
+        /* Botão de adicionar com 40% mais transparência */
+        .add-button {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.018); /* Transparência aumentada */
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); /* Sombra mantida */
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease, color 0.3s ease;
+        }
+
+        body.light-mode .add-button {
+            background: rgba(255, 255, 255, 0.02); /* Transparência aumentada */
+            color: #000;
+        }
+
+        body.dark-mode .add-button {
+            background: rgba(34, 34, 34, 0.02); /* Transparência aumentada */
+            color: #fff;
+        }
+
+        .add-button:hover {
+            transform: scale(1.1);
+        }
+
+        /* Conteúdo principal */
+        .content {
+            text-align: center;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .content h2 {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        body.dark-mode .content h2 {
+            color: #e5e5e5;
+        }
+
+        .content input {
+            width: 300px;
+            padding: 12px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: width 0.3s ease-in-out, padding 0.3s ease-in-out;
+        }
+
+        body.dark-mode .content input {
+            background: rgba(34, 34, 34, 0.8);
+            color: #e5e5e5;
+        }
+
+        /* Remover efeito amarelo no foco */
+        .content input:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        .menu-toggle {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 10;
+            width: 40px;
+            height: 40px;
+            transition: transform 0.4s ease, width 0.4s ease, height 0.4s ease;
+        }
+
+        .menu-toggle div {
+            width: 30px;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+        }
+
+        body.dark-mode .menu-toggle div {
+            background: #e5e5e5;
+        }
+
+        .menu-toggle.adjusted {
+            transform: translateX(250px); /* Sincronizado com a aba */
+        }
+    </style>
+</head>
+<body class="light-mode" ondblclick="handleDoubleClick(event)">
+ 
+     <!-- Interface principal -->
+    <div class="main-interface" id="mainInterface">
+        <div class="sidebar" id="sidebar">
+            <div class="add-button">+</div>
+        </div>
+        <div class="content">
+            <h2>Qual é a sua dúvida?</h2>
+            <input id="searchBar" type="text" placeholder="Digite aqui...">
+        </div>
+        <div class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+
+    <script>
+        // Alternar visibilidade da barra lateral
+        function toggleSidebar() {
+            const sidebar = document.getElementById("sidebar");
+            const menuToggle = document.getElementById("menuToggle");
+
+            sidebar.classList.toggle("open");
+            menuToggle.classList.toggle("adjusted");
+        }
+
+        // Alternar entre Modo Claro e Escuro com duplo clique em áreas vazias
+        function handleDoubleClick(event) {
+            const target = event.target;
+            if (!target.closest(".content") && !target.closest(".sidebar")) {
+                document.body.classList.toggle("light-mode");
+                document.body.classList.toggle("dark-mode");
+            }
+        }
+    </script>
+
+    <!-- Service Worker Script -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+            .then(function(registration) {
+                console.log('Service Worker registrado com sucesso:', registration);
+            })
+            .catch(function(error) {
+                console.log('Erro ao registrar o Service Worker:', error);
+            });
+        }
+    </script>
+</body>
+</html>
